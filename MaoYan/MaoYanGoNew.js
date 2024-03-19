@@ -7,20 +7,21 @@ console.setTitle("猫眼 go!", "#ff11ee00", 30);
 
 //统计绝对坐标
 //关闭Alert弹窗坐标
-const closeAlertX = 875;
-const closeAlertY = 1420;
+const closeAlertX = 864;
+const closeAlertY = 1128;
+const closeAlertLantency = 50;
 //确认选票坐标
-const ConfirmX = 878;
-const ConfirmY = 2263;
+const ConfirmX = 865;
+const ConfirmY = 1834;
 //选票档界面+1份坐标
-const pulsOneX = 976;
-const pulsOneY = 2144;
+const pulsOneX = 980;
+const pulsOneY = 1699;
 //缺票登记坐标
-const closeTicketRegisterX = 942;
-const closeTicketRegisterY = 997;
+const closeTicketRegisterX = 963;
+const closeTicketRegisterY = 769;
 //四排票档坐标
 const ticketBtnArr = [
-    [215, 1030], [505, 1080], [830, 1080],
+    [215, 1080], [505, 1080], [830, 1080],
     [215, 1250], [505, 1250], [830, 1250],
     [215, 1400], [505, 1400], [830, 1400],
     [215, 1620], [505, 1620], [830, 1620]
@@ -41,7 +42,7 @@ function getPlayEtc() {
 
 //获取输入票价信息
 function getTicketPrice() {
-    var ticketPrice = rawInput("请输入票价关键字(按照默认格式)", "380");
+    var ticketPrice = rawInput("请输入票价关键字(按照默认格式)", "318");
     if (ticketPrice == null || ticketPrice.trim() == '') {
         alert("请输入票价信息!");
         return getTicketPrice();
@@ -53,7 +54,7 @@ function getTicketPrice() {
 
 //获取输入的抢票时间
 function getSellTime() {
-    var sellTime = rawInput("请输入抢票时间(按照默认格式)", "03-19 15:00");
+    var sellTime = rawInput("请输入抢票时间(按照默认格式)", "03-20 11:18");
     if (sellTime == null || sellTime.trim() == '') {
         alert("请输入抢票时间!");
         return getSellTime();
@@ -64,8 +65,8 @@ function getSellTime() {
 
 function main() {
     console.log("开始猫眼抢票!");
-    var preBook = text("已 预 约").findOne(2000)
-    var preBook2 = className("android.widget.TextView").text("已填写").findOne(2000)
+    var preBook = desc("已 预 约").findOne(2000)
+    var preBook2 = desc("已填写").findOne(2000)
     var isPreBook = preBook2 != null || preBook != null;
     var playEtc;
     var ticketPrice;
@@ -117,19 +118,19 @@ function main() {
     var realStartTime = getDamaiTimestamp();
     console.log("冲啊！！！");
     while (true) {
-        var but1 = classNameStartsWith('android.widget.').text("立即预订").exists();
-        var but2 = classNameStartsWith('android.widget.').text("立即购票").exists();
-        var but3 = classNameStartsWith('android.widget.').text("特惠购票").exists();
+        var but1 = desc("立即预订").exists();
+        var but2 = desc("立即购票").exists();
+        var but3 = desc("特惠购票").exists();
         //var but4= classNameStartsWith('android.widget.').text("缺货登记").exists();
         var result = but1 || but2 || but3;
         if (result) {
             var s;
             if (but1) {
-                var s = classNameStartsWith('android.widget.').text("立即预订").findOne().click();
+                var s = desc("立即预订").findOne().click();
             } else if (but2) {
-                var s = classNameStartsWith('android.widget.').text("立即购票").findOne().click();
+                var s = desc("立即购票").findOne().click();
             } else if (but3) {
-                var s = classNameStartsWith('android.widget.').text("特惠购票").findOne().click();
+                var s = desc("特惠购票").findOne().click();
             }
             console.log("点击了立即购票相关按钮：" + s)
             break;
@@ -137,31 +138,31 @@ function main() {
     }
     if (!isPreBook) {
         //等待主区域加载出来
-        textContains("请选择票档").waitFor();
+        descContains("看台").waitFor();
 
         // 选择场次
-        //textContains(playEtc).findOne().parent().click();
-        // textContains(" "+playEtc+" ").waitFor();
-        // textContains(" "+playEtc+" ").findOne().click();
+        //descContains(playEtc).findOne().parent().click();
+        // descContains(" "+playEtc+" ").waitFor();
+        // descContains(" "+playEtc+" ").findOne().click();
         // console.log("选择场次");
         // ticketPrice = "¥"+ticketPrice
 
 
         //如果票档区域没加载出来就执行刷新 TODO 调试的时候开启
-        if (!textContains("看台").exists()) {
+        if (!descContains("看台").exists()) {
             refresh_ticket_dom();
         }
-        textContains("看台").waitFor();
-        textContains(ticketPrice).findOne().click();
+        descContains("看台").waitFor();
+        descContains(ticketPrice).findOne().click();
         console.log("选择票档");
-        textContains("数量").waitFor();
+        descContains("数量").waitFor();
     }
     //className("android.widget.TextView").text("确认").waitFor();
     // classNameStartsWith('android.widget.').text("确认").findOne().click();
     for (let cnt = 0; cnt >= 0; cnt++) {
         //猛点，一直点到出现支付按钮为止
         click(ConfirmX, ConfirmY);
-        sleep(50);
+        sleep(closeAlertLantency);
         if (className("android.widget.Button").exists()) {
             break;
         }
@@ -234,7 +235,7 @@ function refresh_dom() {
 function refresh_ticket_dom() {
     for (let i = 0; i < ticketBtnArr.length; i++) {
         click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
-        if (textContains('登记号码').exists()) {
+        if (descContains('登记号码').exists()) {
             click(closeTicketRegisterX, closeTicketRegisterY);
             console.log("成功刷新dom");
             return;

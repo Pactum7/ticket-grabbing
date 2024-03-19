@@ -4,20 +4,21 @@ console.setTitle("余票监控 go!", "#ff11ee00", 30);
 
 //统计绝对坐标
 //关闭Alert弹窗坐标
-const closeAlertX = 875;
-const closeAlertY = 1420;
+const closeAlertX = 864;
+const closeAlertY = 1128;
+const closeAlertLantency = 50;
 //确认选票坐标
-const ConfirmX = 878;
-const ConfirmY = 2263;
+const ConfirmX = 865;
+const ConfirmY = 1834;
 //选票档界面+1份坐标
-const pulsOneX = 976;
-const pulsOneY = 2144;
+const pulsOneX = 980;
+const pulsOneY = 1699;
 //缺票登记坐标
-const closeTicketRegisterX = 942;
-const closeTicketRegisterY = 997;
+const closeTicketRegisterX = 963;
+const closeTicketRegisterY = 769;
 //四排票档坐标
 const ticketBtnArr = [
-    [215, 1030], [505, 1080], [830, 1080],
+    [215, 1080], [505, 1080], [830, 1080],
     [215, 1250], [505, 1250], [830, 1250],
     [215, 1400], [505, 1400], [830, 1400],
     [215, 1620], [505, 1620], [830, 1620]
@@ -45,8 +46,8 @@ function getMaxTicketPrice() {
 function main() {
     var maxTicketPrice = getMaxTicketPrice();
     console.log("监控最高票价：" + maxTicketPrice);
-
-    if (!textContains("看台").exists()) {
+    sleep(50);
+    if (!descContains("看台").exists()) {
         refresh_ticket_dom();
     }
 
@@ -65,7 +66,7 @@ function main() {
 
 function cycleMonitor(maxTicketPrice) {
     //等待余票信息加载出来
-    textContains("请选择票档").waitFor();
+    descContains("请选择票档").waitFor();
     //获取符合条件的票档数组
     let targetTickets = get_less_than_tickets(maxTicketPrice)
     for (let amount of targetTickets) {
@@ -79,24 +80,26 @@ function cycleMonitor(maxTicketPrice) {
 
 function doSubmit(amount) {
 
-    textContains("¥" + amount).findOne().click();
-    textContains("数量").waitFor();
-    if (text("1份").exists()) {
+    descContains("¥" + amount).findOne().click();
+    descContains("数量").waitFor();
+    if (desc("1份").exists()) {
         //点+1
         click(pulsOneX, pulsOneY);
+        log('点+1');
     }
 
     let attemptCnt = 0;
     let attemptMaxCnt = 150;
-    while (className("android.widget.TextView").text("确认").exists() && attemptMaxCnt <= attemptMaxCnt) {
+    while (desc("确认").exists() && attemptMaxCnt <= attemptMaxCnt) {
         // 点击确认
-        // if(text("确认").exists()){
-        text("确认").click();
+        // if(desc("确认").exists()){
+        desc("确认").click();
         // log('点确认按钮');
         // }else{
         click(ConfirmX, ConfirmY);
-        //     log('点确认坐标');
+            log('点确认坐标');
         // }
+        sleep(50);
         if (className("android.widget.Button").exists()) {
             break;
         }
@@ -109,9 +112,10 @@ function doSubmit(amount) {
 
     //等待立即支付按钮出现
     className("android.widget.Button").waitFor();
+    desc("默认").waitFor();
     //没有选择观演人时，把所有没选的都选上
-    if (text("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").exists()) {
-        text("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").click();
+    if (desc("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").exists()) {
+        desc("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").click();
     }
     // //点击支付
     // var c = className("android.widget.Button").findOne().click();
@@ -127,7 +131,7 @@ function doSubmit(amount) {
     for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
         //直接猛点就完事了
         var c = className("android.widget.Button").findOne().click();
-        sleep(50);
+        sleep(closeAlertLantency);
         if (cnt % 20 == 0) {
             log("已点击支付次数：" + cnt);
         }
@@ -195,7 +199,7 @@ function refresh_dom() {
 function refresh_ticket_dom() {
     for (let i = 0; i < ticketBtnArr.length; i++) {
         click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
-        if (textContains('登记号码').exists()) {
+        if (descContains('登记号码').exists()) {
             click(closeTicketRegisterX, closeTicketRegisterY);
             console.log("成功刷新dom");
             return;
@@ -207,10 +211,10 @@ function refresh_ticket_dom() {
 
 function get_less_than_tickets(maxTicketPrice) {
     var targetTickets = [];
-    textContains("¥").find().forEach(function (btn) {
-        // log(btn.text());
-        if (!btn.text().includes("缺货登记")) {
-            let match = btn.text().match(/\¥(\d+)/);
+    descContains("¥").find().forEach(function (btn) {
+        // log(btn.desc());
+        if (!btn.desc().includes("缺货登记")) {
+            let match = btn.desc().match(/.{2,6}\¥(\d+)/);
             let amount;
             if (match && (amount = parseInt(match[1])) < maxTicketPrice) {
                 targetTickets.push(amount);
