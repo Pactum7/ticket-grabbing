@@ -5,6 +5,27 @@
 openConsole();
 console.setTitle("猫眼 go!","#ff11ee00",30);
 
+//统计绝对坐标
+//关闭Alert弹窗坐标
+const closeAlertX = 875;
+const closeAlertY = 1420;
+//确认选票坐标
+const ConfirmX = 878;
+const ConfirmY = 2263;
+//选票档界面+1份坐标
+const pulsOneX = 976;
+const pulsOneY = 2144;
+//缺票登记坐标
+const closeTicketRegisterX = 942;
+const closeTicketRegisterY = 997;
+//四排票档坐标
+const ticketBtnArr = [
+    [215,1030],[505,1080],[830,1080],
+    [215,1250],[505,1250],[830,1250],
+    [215,1400],[505,1400],[830,1400],
+    [215,1620],[505,1620],[830,1620]
+];
+
 main();
 
 //获取输入的场次信息
@@ -126,43 +147,37 @@ function main() {
        // ticketPrice = "¥"+ticketPrice
        
 
-       //如果票档区域没加载出来就执行刷新
+       //如果票档区域没加载出来就执行刷新 TODO 调试的时候开启
        if(!textContains("看台").exists()){
             refresh_ticket_dom();
        }
        textContains("看台").waitFor();
        textContains(ticketPrice).findOne().click();
        console.log("选择票档");
+       textContains("数量").waitFor();
    }
    //className("android.widget.TextView").text("确认").waitFor();
    // classNameStartsWith('android.widget.').text("确认").findOne().click();
-   
-   textContains("数量").waitFor();
-   //点击确认
-   click(878,2263);
-   console.log("点击确认");
-   // while(className("android.widget.TextView").text("确认").exists()){
-   //     console.log("确认按钮还在，继续点击");
-   // }
-   //等待立即支付按钮出现
-   className("android.widget.Button").waitFor();
-//    var c = className("android.widget.Button").findOne().click();
-//    console.log("点击立即支付 "+c);  
-//    var t = getDamaiTimestamp() - realStartTime
-//    console.log("花费时间："+t)
-//    console.log("休息2秒,如果立即支付按钮还在再点击一次")
-//    //休息2秒
-//    sleep(2000)
-//    if(className("android.widget.Button").exists()){
-//        var c = className("android.widget.Button").findOne().click();
-//        console.log("继续点击立即支付 "+c);  
-//    }
-   //等待调优（看支付调起失败时会有什么弹窗）立即支付按钮一直在一直支付
-   while(className("android.widget.Button").exists()){
-       var c = className("android.widget.Button").findOne().click();
-       sleep(100)
-       console.log("继续点击立即支付 "+c);  
-   }
+    for(let cnt = 0; cnt >= 0; cnt++){
+        //猛点，一直点到出现支付按钮为止
+        click(ConfirmX,ConfirmY);
+        sleep(50);
+        if(className("android.widget.Button").exists()){
+            break;
+        }
+        if(cnt % 20 == 0){
+            log("已点击确认次数："+cnt);
+        }
+    }
+    
+    for(let cnt = 0; className("android.widget.Button").exists(); cnt++){
+        //直接猛点就完事了
+        var c = className("android.widget.Button").findOne().click();
+        sleep(50);
+        if(cnt % 20 == 0){
+            log("已点击支付次数："+cnt);
+        }
+    }
    
    console.log("结束时间："+convertToTime(getDamaiTimestamp()))
 
@@ -209,7 +224,7 @@ function refresh_dom(){
     threads.start(function(){
         sleep(20)
         //点确定关闭alert弹窗
-        click(875,1420);
+        click(closeAlertX,closeAlertY);
     });
     // rawInput("请输入场次关键字(按照默认格式)", "周六");
     alert("刷新dom!");
@@ -217,17 +232,10 @@ function refresh_dom(){
 }
 
 function refresh_ticket_dom(){
-    let ticketBtnArr = [
-        [215,1030],[505,1080],[830,1080],
-        [215,1250],[505,1250],[830,1250],
-        [215,1400],[505,1400],[830,1400],
-        [215,1620],[505,1620],[830,1620]
-    ];
-    
     for(let i=0;i<ticketBtnArr.length;i++){
         click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
         if(textContains('登记号码').exists()){
-            click(942, 997);
+            click(closeTicketRegisterX, closeTicketRegisterY);
             console.log("成功刷新dom");
             return;
         }

@@ -1,4 +1,30 @@
 
+openConsole();
+console.setTitle("余票监控 go!","#ff11ee00",30);
+
+//统计绝对坐标
+//关闭Alert弹窗坐标
+const closeAlertX = 875;
+const closeAlertY = 1420;
+//确认选票坐标
+const ConfirmX = 878;
+const ConfirmY = 2263;
+//选票档界面+1份坐标
+const pulsOneX = 976;
+const pulsOneY = 2144;
+//缺票登记坐标
+const closeTicketRegisterX = 942;
+const closeTicketRegisterY = 997;
+//四排票档坐标
+const ticketBtnArr = [
+    [215,1030],[505,1080],[830,1080],
+    [215,1250],[505,1250],[830,1250],
+    [215,1400],[505,1400],[830,1400],
+    [215,1620],[505,1620],[830,1620]
+];
+
+//监控时间间隔，单位：秒
+const monitorIntervalSeconds = 5;
 
 main();
 
@@ -24,61 +50,92 @@ function main() {
         refresh_ticket_dom();
     }
     
-    setInterval(()=>{
+    while(true){
         cycleMonitor(maxTicketPrice);
-    }, 5000);
+        //每5秒刷新一次票档
+        sleep(monitorIntervalSeconds * 1000);
+        //刷新余票信息
+        textMatches(/202\d\-\d+\-\d+ 周.*/).findOne().click();
+        sleep(1000)
+    }
    
    
 
 }
 
 function cycleMonitor(maxTicketPrice){
-    //刷新余票信息
-    textMatches(/202\d\-\d+\-\d+ 周.*/).findOne().click();
     //等待余票信息加载出来
     textContains("请选择票档").waitFor();
-    log(maxTicketPrice)
     //获取符合条件的票档数组
     let targetTickets = get_less_than_tickets(maxTicketPrice)
     for(let amount of targetTickets){
-        //抢一个
-        doSubmit(amount);
-        //TODO
-        break;
+        log("开冲一个："+amount);
+        //返回true表示走完了流程还没抢到，需要刷新票档，返回false表示没确认成功，更换一个票档继续尝试确认
+        if(doSubmit(amount)){
+            break;
+        }
     }
 }
 
 function doSubmit(amount){
-    log("开冲一个："+amount);
+    
     textContains("¥"+amount).findOne().click();
     textContains("数量").waitFor();
-    //点击确认
-    click(878,2263);
-    console.log("点击确认");
-    // while(className("android.widget.TextView").text("确认").exists()){
-    //     console.log("确认按钮还在，继续点击");
-    // }
+    if(text("1份").exists()){
+        //点+1
+        click(pulsOneX,pulsOneY);
+    }
+
+    let attemptCnt = 0;
+    let attemptMaxCnt = 150;
+    while(className("android.widget.TextView").text("确认").exists() && attemptMaxCnt <= attemptMaxCnt){
+        // 点击确认
+        // if(text("确认").exists()){
+            text("确认").click();
+            // log('点确认按钮');
+        // }else{
+            click(ConfirmX,ConfirmY);
+        //     log('点确认坐标');
+        // }
+        if(className("android.widget.Button").exists()){
+            break;
+        }
+        attemptCnt++;
+    }
+    if(attemptCnt >= attemptMaxCnt && !className("android.widget.Button").exists()){
+        return false;
+    }
+    log("尝试次数："+attemptCnt);
+
     //等待立即支付按钮出现
     className("android.widget.Button").waitFor();
-    var c = className("android.widget.Button").findOne().click();
-    console.log("点击立即支付 "+c);  
-    var t = getDamaiTimestamp() - realStartTime
-    console.log("花费时间："+t)
-    console.log("休息2秒,如果立即支付按钮还在再点击一次")
-    //休息2秒
-    sleep(2000)
-    if(className("android.widget.Button").exists()){
-        var c = className("android.widget.Button").findOne().click();
-        console.log("继续点击立即支付 "+c);  
+    //没有选择观演人时，把所有没选的都选上
+    if(text("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").exists()){
+        text("wc0GRRGh2f2pQAAAABJRU5ErkJggg==").click();
     }
-    //等待调优（看支付调起失败时会有什么弹窗）立即支付按钮一直在一直支付
-    // while(className("android.widget.Button").exists()){
+    // //点击支付
+    // var c = className("android.widget.Button").findOne().click();
+    // console.log("点击立即支付 "+c);
+    // console.log("休息2秒,如果立即支付按钮还在再点击一次")
+    // //休息2秒
+    // sleep(2000)
+    // if(className("android.widget.Button").exists()){
     //     var c = className("android.widget.Button").findOne().click();
-    //     sleep(100)
     //     console.log("继续点击立即支付 "+c);  
     // }
+    console.log("准备点击 "); 
+    for(let cnt = 0; className("android.widget.Button").exists(); cnt++){
+        //直接猛点就完事了
+        var c = className("android.widget.Button").findOne().click();
+        sleep(50);
+        if(cnt % 20 == 0){
+            log("已点击支付次数："+cnt);
+        }
+        //TODO 出现类似【票已经卖完了】退出循环，继续刷新票档
+    }
     
     console.log("结束时间："+convertToTime(getDamaiTimestamp()))
+    return true;
 }
 
 /**
@@ -116,28 +173,30 @@ function convertToTime(timestamp) {
    var iso8601 = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
    return iso8601;
 }
-
+/**
+ * alert一个弹窗，提前使用异步线程延时点击关闭alert弹窗
+ */
 function refresh_dom(){
     threads.start(function(){
         sleep(20)
         //点确定关闭alert弹窗
-        click(875,1420);
+        click(closeAlertX,closeAlertY);
     });
     // rawInput("请输入场次关键字(按照默认格式)", "周六");
     alert("刷新dom!");
 }
 
+/**
+ * 刷新票档区域的布局结构，不刷新的话票档区域的布局内容无法选中；
+ * 实测发现弹窗可以触发票档区域布局的重新加载，因此事先统计好几
+ * 排票档的绝对坐标，依次点击触发“缺票登记”弹窗再关闭即可；
+ * 兜底情况alert一个弹窗，提前使用异步线程延时点击关闭alert弹窗
+ */
 function refresh_ticket_dom(){
-    let ticketBtnArr = [
-        [215,1030],[505,1030],[830,1030],
-        [215,1180],[505,1180],[830,1180],
-        [215,1340],[505,1340],[830,1340]
-    ];
-    
     for(let i=0;i<ticketBtnArr.length;i++){
         click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
         if(textContains('登记号码').exists()){
-            click(942, 997);
+            click(closeTicketRegisterX, closeTicketRegisterY);
             console.log("成功刷新dom");
             return;
         }
@@ -162,7 +221,7 @@ function get_less_than_tickets(maxTicketPrice){
     targetTickets.sort(function(a, b) {
         return a - b;
     });
-    log(targetTickets);
+    log("符合条件:"+targetTickets);
     return targetTickets;
 }
 
