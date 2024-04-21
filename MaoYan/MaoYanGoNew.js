@@ -1,66 +1,31 @@
-//  // 检查无障碍服务是否已经启用，如果没有启用则跳转到无障碍服务启用界面，并等待无障碍服务启动；当无障碍服务启动后脚本会继续运行。
-//  auto.waitFor();
-//  //打开猫眼app
-//  app.launchApp("猫眼");
+// 检查无障碍服务是否已经启用，如果没有启用则跳转到无障碍服务启用界面，并等待无障碍服务启动；当无障碍服务启动后脚本会继续运行。
+auto.waitFor();
+//打开猫眼app
+app.launchApp("猫眼");
 openConsole();
 console.setTitle("猫眼 go!", "#ff11ee00", 30);
 
-//统计绝对坐标
-//关闭Alert弹窗坐标
-const closeAlertX = 875;
-const closeAlertY = 1420;
-//确认选票坐标
+//确认选票坐标，建议配置（不配置时仍会寻找“确认”按钮进行点击，但可能会出现点击失败的情况）
 const ConfirmX = 878;
 const ConfirmY = 2263;
-//选票档界面+1份坐标
-const pulsOneX = 976;
-const pulsOneY = 2144;
-//缺票登记坐标
-const closeTicketRegisterX = 942;
-const closeTicketRegisterY = 997;
-//四排票档坐标
-const ticketBtnArr = [
-    [215, 1030], [505, 1080], [830, 1080],
-    [215, 1250], [505, 1250], [830, 1250],
-    [215, 1400], [505, 1400], [830, 1400],
-    [215, 1620], [505, 1620], [830, 1620]
-];
+
+//是否在测试调试
+var isDebug = false;
+//调试模式下的模拟票档自动选择的点击坐标
+const debugTicketClickX = 700;
+const debugTicketClickY = 1000;
 
 main();
 
-//获取输入的场次信息
-function getPlayEtc() {
-    var playEtc = rawInput("请输入场次关键字(按照默认格式)", "周六");
-    if (playEtc == null || playEtc.trim() == '') {
-        alert("请输入场次信息!");
-        return getPlayEtc();
-    }
-    console.log("手动输入的场次信息：" + playEtc);
-    return playEtc;
-}
-
-//获取输入票价信息
-function getTicketPrice() {
-    var ticketPrice = rawInput("请输入票价关键字(按照默认格式)", "380");
-    if (ticketPrice == null || ticketPrice.trim() == '') {
-        alert("请输入票价信息!");
-        return getTicketPrice();
-    }
-
-    console.log("手动输入的票价信息：" + ticketPrice);
-    return ticketPrice;
-}
-
 //获取输入的抢票时间
 function getSellTime() {
-    var sellTime = rawInput("请输入抢票时间(按照默认格式)", "03-19 15:00");
+    var sellTime = rawInput("请输入抢票时间(按照默认格式)", "04-21 16:18");
     if (sellTime == null || sellTime.trim() == '') {
         alert("请输入抢票时间!");
         return getSellTime();
     }
     return sellTime;
 }
-
 
 function main() {
     console.log("开始猫眼抢票!");
@@ -70,10 +35,9 @@ function main() {
     var playEtc;
     var ticketPrice;
     console.log("界面是否已预约：" + isPreBook);
-    if (!isPreBook) {
-        console.log("无预约信息，请输入抢票信息!");
-        playEtc = getPlayEtc();
-        ticketPrice = getTicketPrice();
+    if (!isPreBook && !isDebug) {
+        console.log("无预约信息，请提前填写抢票信息!（若已经开票，请到票档界面使用MoYanMonitor.js）");
+        return;
     }
 
     var month;
@@ -131,36 +95,24 @@ function main() {
             } else if (but3) {
                 var s = classNameStartsWith('android.widget.').text("特惠购票").findOne().click();
             }
-            console.log("点击了立即购票相关按钮：" + s)
             break;
         }
     }
-    if (!isPreBook) {
-        //等待主区域加载出来
-        textContains("请选择票档").waitFor();
+    console.log("①准备确认购票");
 
-        // 选择场次
-        //textContains(playEtc).findOne().parent().click();
-        // textContains(" "+playEtc+" ").waitFor();
-        // textContains(" "+playEtc+" ").findOne().click();
-        // console.log("选择场次");
-        // ticketPrice = "¥"+ticketPrice
-
-
-        //如果票档区域没加载出来就执行刷新 TODO 调试的时候开启
-        if (!textContains("看台").exists()) {
-            refresh_ticket_dom();
-        }
-        textContains("看台").waitFor();
-        textContains(ticketPrice).findOne().click();
-        console.log("选择票档");
-        textContains("数量").waitFor();
-    }
-    //className("android.widget.TextView").text("确认").waitFor();
-    // classNameStartsWith('android.widget.').text("确认").findOne().click();
+    //猛点，一直点到出现支付按钮为止
     for (let cnt = 0; cnt >= 0; cnt++) {
-        //猛点，一直点到出现支付按钮为止
+        if (isDebug) {
+            //调试模式，模拟选择票档，模拟已预约后自动选择票档
+            click(debugTicketClickX, debugTicketClickY);
+        }
+
+        //绝对坐标点击
         click(ConfirmX, ConfirmY);
+        //文字查找按钮点击，避免未正确配置坐标导致的点击失败
+        if(text("确认").exists()){
+            text("确认").click();
+        }
         sleep(50);
         if (className("android.widget.Button").exists()) {
             break;
@@ -169,18 +121,23 @@ function main() {
             log("已点击确认次数：" + cnt);
         }
     }
+    console.log("②准备确认支付");
 
-    for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
-        //直接猛点就完事了
-        var c = className("android.widget.Button").findOne().click();
-        sleep(50);
-        if (cnt % 20 == 0) {
-            log("已点击支付次数：" + cnt);
+    if (!isDebug) {
+        //调试模式时不点击支付按钮
+        for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
+            //直接猛点就完事了
+            var c = className("android.widget.Button").findOne().click();
+            sleep(50);
+            if (cnt % 20 == 0) {
+                log("已点击支付次数：" + cnt);
+            }
         }
+    }else{
+        console.log("调试模式，不点击支付按钮");
     }
 
     console.log("结束时间：" + convertToTime(getDamaiTimestamp()))
-
 
 }
 
@@ -219,41 +176,3 @@ function convertToTime(timestamp) {
     var iso8601 = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
     return iso8601;
 }
-
-function refresh_dom() {
-    threads.start(function () {
-        sleep(20)
-        //点确定关闭alert弹窗
-        click(closeAlertX, closeAlertY);
-    });
-    // rawInput("请输入场次关键字(按照默认格式)", "周六");
-    alert("刷新dom!");
-    log("alert刷新dom")
-}
-
-function refresh_ticket_dom() {
-    for (let i = 0; i < ticketBtnArr.length; i++) {
-        click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
-        if (textContains('登记号码').exists()) {
-            click(closeTicketRegisterX, closeTicketRegisterY);
-            console.log("成功刷新dom");
-            return;
-        }
-    }
-    //三排票档都点完了还没搞出来弹窗那就直接弹个窗刷新dom
-    refresh_dom();
-}
-
-
-//点击控件所在坐标
-function btn_position_click(x) {
-    if (x) {
-        var b = x.bounds();
-        print(b.centerX())
-        print(b.centerY())
-        var c = click(b.centerX(), b.centerY())
-
-        console.log("点击是否成功：" + c);
-    }
-}
-
