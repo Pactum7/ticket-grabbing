@@ -24,14 +24,14 @@ const ticketBtnArr = [
 ];
 
 //监控时间间隔，单位：秒
-const monitorIntervalSeconds = 5;
+const monitorIntervalSeconds = 2;
 
 main();
 
 
 //获取输入票价信息
 function getMaxTicketPrice() {
-    var ticketPrice = rawInput("请输入监控最高票价", "1000");
+    var ticketPrice = rawInput("请输入监控最高票价", "800");
     if (ticketPrice == null || ticketPrice.trim() == '') {
         alert("请输入监控最高票价!");
         return getMaxTicketPrice();
@@ -43,8 +43,7 @@ function getMaxTicketPrice() {
 
 //获取输入的场次信息
 function getPlayEtc() {
-    // var playEtc = rawInput("请输入场次关键字(按照默认格式)", "04-26,04-27,04-28");
-    var playEtc = rawInput("请输入场次关键字(按照默认格式)", "05-16,05-17,05-18");
+    var playEtc = rawInput("请输入场次关键字(按照默认格式)", "05-18,05-19");
     if (playEtc == null || playEtc.trim() == '') {
         alert("请输入场次信息!");
         return getPlayEtc();
@@ -61,19 +60,22 @@ function main() {
     var maxTicketPrice = getMaxTicketPrice();
     console.log("监控最高票价：" + maxTicketPrice);
 
+    //等待一小会儿，避免上个弹窗还没关闭，无法正确判断票档区布局元素是否存在
     sleep(50);
     if (!textContains("看台").exists()) {
         refresh_ticket_dom();
     }
+    console.log('进入监控')
 
     while (true) {
         for(let playEtc of playEtcArr){
             cycleMonitor(maxTicketPrice);
+            log('准备刷新余票');
             //刷新余票信息
             textContains(playEtc).findOne().click();
             sleep(1000)
         }
-        //每5秒刷新一次票档
+        //每2秒刷新一次票档
         sleep(monitorIntervalSeconds * 1000);
     }
 
@@ -191,43 +193,23 @@ function convertToTime(timestamp) {
     var iso8601 = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
     return iso8601;
 }
+
 /**
  * alert一个弹窗，提前使用异步线程延时点击关闭alert弹窗
  */
-function refresh_dom() {
-    threads.start(function () {
-        sleep(200)
-        //点确定关闭alert弹窗
-        click(closeAlertX, closeAlertY);
-    });
-    // rawInput("请输入场次关键字(按照默认格式)", "周六");
-    alert("刷新dom!");
-}
-
-/**
- * 刷新票档区域的布局结构，不刷新的话票档区域的布局内容无法选中；
- * 实测发现弹窗可以触发票档区域布局的重新加载，因此事先统计好几
- * 排票档的绝对坐标，依次点击触发“缺票登记”弹窗再关闭即可；
- * 兜底情况alert一个弹窗，提前使用异步线程延时点击关闭alert弹窗
- */
 function refresh_ticket_dom() {
-    // for (let i = 0; i < ticketBtnArr.length; i++) {
-    //     click(ticketBtnArr[i][0], ticketBtnArr[i][1]);
-    //     if (textContains('登记号码').exists()) {
-    //         click(closeTicketRegisterX, closeTicketRegisterY);
-    //         console.log("成功刷新dom");
-    //         return;
-    //     }
-    // }
-    //三排票档都点完了还没搞出来弹窗那就直接弹个窗刷新dom
-    refresh_dom();
+    threads.start(function () {
+        id("md_buttonDefaultPositive").findOne().click()
+    });
+    alert("刷新dom!");
 }
 
 function get_less_than_tickets(maxTicketPrice) {
     var targetTickets = [];
     textContains("¥").find().forEach(function (btn) {
         // log(btn.text());
-        if (!btn.text().includes("缺货登记")) {
+        //正则判断如果btn.text()内容包含中文，例如看台、内场
+        if (btn.text().match(/[\u4e00-\u9fa5]/) != null) {
             let match = btn.text().match(/\¥(\d+)/);
             let amount;
             if (match && (amount = parseInt(match[1])) < maxTicketPrice) {

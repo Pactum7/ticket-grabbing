@@ -46,12 +46,13 @@ function main() {
     var maxTicketPrice = getMaxTicketPrice();
     console.log("监控最高票价：" + maxTicketPrice);
 
+    sleep(50);
     if (!textContains("看台").exists()) {
         refresh_ticket_dom();
     }
 
     while (true) {
-        cycleMonitor(maxTicketPrice);
+        // cycleMonitor(maxTicketPrice);
         //每5秒刷新一次票档
         sleep(monitorIntervalSeconds * 1000);
         //刷新余票信息
