@@ -24,3 +24,7 @@
 //     return targetTickets;
 // }
 
+if(text("确认").exists()){
+    console.log("存在");
+}
+console.log("结束");
