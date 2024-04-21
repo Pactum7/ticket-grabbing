@@ -24,7 +24,7 @@
 //     return targetTickets;
 // }
 
-if(text("确认").exists()){
-    console.log("存在");
-}
-console.log("结束");
+
+
+let ticketNumParent = textMatches('/\\d+份/').findOne().parent();
+ticketNumParent.children()[ticketNumParent.childCount() - 1].click()
