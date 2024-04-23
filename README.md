@@ -1,5 +1,10 @@
 # TicketGrabbing
-猫眼大麦抢票AutoX.js脚本
+猫眼
+
+
+## 声明
+本项目脚本仅模拟人工操作，解放双手，最大化减少购票繁杂流程所耗时间，提升购票几率，请支持官方，抵制黄牛囤票！
+
 ## 环境
 基于AutoX.js(安卓平台上的JavaScript自动化工具)
 
@@ -17,13 +22,13 @@
 
 
 ##
-搞不定环境或者不想折腾需要代抢请可以加我微信有偿提供帮助：
-![dsy](https://github.com/Pactum7/ticket-grabbing/assets/45119228/94aae380-2072-4b92-ae48-cd4366b812ef)
+搞不定环境或者不想折腾需要代抢请可以加我微信有偿提供帮助（黄牛勿扰）：
+
+![image](https://github.com/Pactum7/ticket-grabbing/assets/45119228/c3dd4072-c295-406f-82e6-94729f8753f2)
+
 
 
 ## 打赏
 熬夜不易，如果对你有帮助，可以请我喝个奶茶，感谢！
 
-![wechat](https://github.com/Pactum7/ticket-grabbing/assets/45119228/e94519d2-319f-45ca-8990-4307e14eeb7b)
-
-![alipay](https://github.com/Pactum7/ticket-grabbing/assets/45119228/7ab75fa9-9306-484a-bc07-d438362e6190)
+![image](https://github.com/Pactum7/ticket-grabbing/assets/45119228/ac984eb7-b000-4da3-9ebf-d74891b8aaa5)
