@@ -9,6 +9,9 @@ console.setTitle("余票监控 go!", "#ff11ee00", 30);
 //监控刷新票档时间间隔，单位：秒
 const monitorIntervalSeconds = 2;
 
+//是否在测试调试，测试时不会点击支付按钮，避免生成过多订单
+var isDebug = false;
+
 //默认参数收集，如果设置了默认值，可以直接使用默认值，不再需要弹窗输入，加快脚本启动进程
 //默认场次信息，例如：05-18,05-19
 var defaultPlayEtcStr;
@@ -63,21 +66,40 @@ function main() {
 
     //等待一小会儿，避免上个弹窗还没关闭，无法正确判断票档区布局元素是否存在
     sleep(50);
-    if (!textContains("看台").exists()) {
+    if (!textContains("¥").exists()) {
         refresh_ticket_dom();
+    }
+    if (!textContains("¥").exists()) {
+        console.log('请主动点击中间票档区域任意按钮刷新dom')
     }
     console.log('进入监控')
 
-    while (true) {
-        for(let playEtc of playEtcArr){
-            cycleMonitor(maxTicketPrice, viewers);
-            log('准备刷新余票');
-            //刷新余票信息
-            textContains(playEtc).findOne().click();
-            sleep(1000)
+    threads.start(function () {
+        console.log("开启票档扫描线程");
+        while (true) {
+            //当前还在票档界面，就持续扫描
+            while (textContains("¥").exists()) {
+                cycleMonitor(maxTicketPrice, viewers);
+                //50ms扫描一次
+                sleep(50);
+            }
+            sleep(1000);
         }
+    });
+
+    while (true) {
         //每2秒刷新一次票档
         sleep(monitorIntervalSeconds * 1000);
+        //只要当前在场次选择界面，就点击刷新余票信息
+        if(className("android.widget.TextView").text("场次").exists() && !textContains("数量").exists()){
+            for(let playEtc of playEtcArr){
+                if(isDebug){
+                    log("刷新场次余票信息：")
+                }
+                //刷新余票信息
+                textContains(playEtc).findOne().click();
+            }
+        }
     }
 
 
@@ -86,15 +108,12 @@ function main() {
 
 function cycleMonitor(maxTicketPrice, viewers) {
     //等待余票信息加载出来
-    textContains("请选择票档").waitFor();
+    // textContains("请选择票档").waitFor();
     //获取符合条件的票档数组
     let targetTickets = get_less_than_tickets(maxTicketPrice)
     for (let amount of targetTickets) {
         log("开冲一个：" + amount);
-        //返回true表示走完了流程还没抢到，需要刷新票档，返回false表示没确认成功，更换一个票档继续尝试确认
-        if (doSubmit(amount, viewers)) {
-            break;
-        }
+        doSubmit(amount, viewers);
     }
 }
 
@@ -105,10 +124,11 @@ function doSubmit(amount, viewers) {
     textContains("¥" + amount).findOne().click();
     textContains("数量").waitFor();
 
-    if (text("1份").exists()) {
+    if (textMatches("\\d+份").exists()) {
+        let curCount = parseInt(textMatches("\\d+份").findOne().text().replace("份", ""));
         //根据观演人数点+1
         let plusObj;
-        for (let i = 0; i < viewersArr.length - 1; i++) {
+        for (let i = curCount; i < viewersArr.length; i++) {
             if(!plusObj){
                 let ticketNumParent = textMatches('/\\d+份/').findOne().parent()
                 plusObj = ticketNumParent.children()[ticketNumParent.childCount() - 1]
@@ -116,17 +136,31 @@ function doSubmit(amount, viewers) {
             plusObj.click() ;
         }
     }
+    //plus点击后，等待数量组件框刷新，很重要
+    textMatches("\\d+份").waitFor();
+    if(!text(viewersArr.length + "份").exists()){
+        console.log("票数不足，继续刷新");
+        return true;
+    }
 
     let attemptCnt = 0;
     let attemptMaxCnt = 150;
-    while (className("android.widget.TextView").text("确认").exists() && attemptMaxCnt <= attemptMaxCnt) {
-        click("确认");
+    while (text("确认").exists() && attemptCnt <= attemptMaxCnt) {
+        click("确认");if(isDebug){
+            console.log("点击确认");
+        }
         if (className("android.widget.Button").exists()) {
+            if(isDebug){
+                console.log("找到支付按钮，准备支付");
+            }
             break;
         }
         attemptCnt++;
     }
     if (attemptCnt >= attemptMaxCnt && !className("android.widget.Button").exists()) {
+        if(isDebug){
+            console.log("尝试次数过多，继续刷新");
+        }
         return false;
     }
     log("尝试次数：" + attemptCnt);
@@ -143,15 +177,17 @@ function doSubmit(amount, viewers) {
         }
     }
 
-    console.log("准备点击 ");
-    for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
-        //直接猛点就完事了
-        var c = className("android.widget.Button").findOne().click();
-        sleep(50);
-        if (cnt % 20 == 0) {
-            log("已点击支付次数：" + cnt);
+    if(!isDebug){
+        console.log("准备点击 ");
+        for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
+            //直接猛点就完事了
+            var c = className("android.widget.Button").findOne().click();
+            sleep(50);
+            if (cnt % 20 == 0) {
+                log("点支付次数:" + cnt + " 可继续等待或返回上一个界面继续刷新其他票档");
+            }
+            //TODO 出现类似【票已经卖完了】退出循环，继续刷新票档
         }
-        //TODO 出现类似【票已经卖完了】退出循环，继续刷新票档
     }
 
     console.log("结束时间：" + convertToTime(getDamaiTimestamp()))
@@ -253,8 +289,9 @@ function get_less_than_tickets(maxTicketPrice) {
     var targetTickets = [];
     textContains("¥").find().forEach(function (btn) {
         // log(btn.text());
-        //正则判断如果btn.text()内容包含中文，例如看台、内场
-        if (btn.text().match(/[\u4e00-\u9fa5]/) != null) {
+        //适配：某些设备上，缺货提示在文本中；某些设备上，缺货提示在兄弟元素中
+        if ((btn.parent().childCount() == 1 && !btn.text().includes("缺货")) 
+            || btn.parent().childCount() >= 1 && descOrTextNotContains(btn.parent(), "缺货")){
             let match = btn.text().match(/\¥(\d+)/);
             let amount;
             if (match && (amount = parseInt(match[1])) < maxTicketPrice) {
@@ -266,8 +303,31 @@ function get_less_than_tickets(maxTicketPrice) {
     targetTickets.sort(function (a, b) {
         return a - b;
     });
-    log("符合条件:" + targetTickets);
+
+    if(isDebug){
+        log("符合条件:" + targetTickets);
+    }
     return targetTickets;
+}
+
+/**
+ * 查看node几点及其所有子节点是否包含str
+ * @param {*} node 
+ * @param {*} str 
+ * @returns 
+ */
+function descOrTextNotContains(node, str){
+    if((node.text() != null && node.text().includes(str)) 
+        || (node.desc() != null && node.desc().includes(str))){
+        return false;
+    }
+    if(node.childCount() > 0){
+        for(let i = 0; i < node.childCount(); i++){
+            if(!descOrTextNotContains(node.children()[i], str)){
+                return false;
+            }
+        }
+    }
 }
 
 //点击控件所在坐标
