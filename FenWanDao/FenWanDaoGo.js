@@ -1,6 +1,6 @@
 // 检查无障碍服务是否已经启用，如果没有启用则跳转到无障碍服务启用界面，并等待无障碍服务启动；当无障碍服务启动后脚本会继续运行。
 auto.waitFor();
-//打开猫眼app
+//打开纷玩岛app
 app.launchApp("纷玩岛");
 openConsole();
 console.setTitle("纷玩岛 go!", "#ff11ee00", 30);
@@ -115,6 +115,7 @@ function main() {
 
     if (!isDebug) {
         //调试模式时不点击支付按钮
+
         for (let cnt = 1; cnt >= 0; cnt++) {
             //直接猛点就完事了
             if(className("android.widget.Button").desc("提交订单").exists()){
@@ -129,6 +130,7 @@ function main() {
             if(className("android.widget.Button").desc("确认").exists()){
                 className("android.widget.Button").desc("确认").findOne().click();
             }
+            //睡眠，避免过快点击导致卡死
             sleep(200);
             if(descContains("确认并支付").exists() || textContains("确认并支付").exists()){
                 log("抢票成功啦！！！")
