@@ -44,6 +44,8 @@
 ## HELP
 搞不定环境或者不想折腾需要代抢请可以加我微信有偿提供帮助（黄牛勿扰）：
 
+**另外，接脚本定制需求开发**
+
 ![image](https://github.com/Pactum7/ticket-grabbing/assets/45119228/c3dd4072-c295-406f-82e6-94729f8753f2)
 
 
