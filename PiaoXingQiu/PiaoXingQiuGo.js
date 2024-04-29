@@ -10,7 +10,7 @@ const ConfirmX = 878;
 const ConfirmY = 2263;
 
 //是否在测试调试
-var isDebug = true;
+var isDebug = false;
 //调试模式下的模拟票档自动选择的点击坐标
 const debugTicketClickX = 310;
 const debugTicketClickY = 880;
