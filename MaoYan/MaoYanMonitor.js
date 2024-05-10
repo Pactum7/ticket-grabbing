@@ -9,6 +9,11 @@ console.setTitle("余票监控 go!", "#ff11ee00", 30);
 //监控刷新票档时间间隔，单位：秒
 const monitorIntervalSeconds = 2;
 
+//WebHook地址，用于抢到了之后推送消息
+const webHookNoticeUrl="";
+//是否响铃提醒
+const isRingingBell = true
+
 //是否在测试调试，测试时不会点击支付按钮，避免生成过多订单
 var isDebug = false;
 
@@ -73,6 +78,18 @@ function main() {
         console.log('请主动点击中间票档区域任意按钮刷新dom')
     }
     console.log('进入监控')
+
+    //出现刷新按钮时点击刷新
+    threads.start(function () {
+        log('刷新按钮自动点击线程已启动')
+        while(true){
+            textContains("刷新").waitFor()
+            textContains("刷新").findOne().click()
+            log("点击刷新...")
+            //避免点击过快
+            sleep(100)
+        }
+    });
 
     threads.start(function () {
         console.log("开启票档扫描线程");
@@ -190,7 +207,19 @@ function doSubmit(amount, viewers) {
         }
     }
 
-    console.log("结束时间：" + convertToTime(getDamaiTimestamp()))
+    console.log("结束，等待5秒后触发判断是否抢到")
+    sleep(5000)
+    if(textContains("微信支付").exists() || descContains("微信支付").exists()){
+        log("抢到啦！！！请尽快支付！！！")
+        //webHook推送
+        if(webHookNoticeUrl.length > 0){
+            webHookSend("抢到啦！！！请尽快支付！！！");
+        }
+        //播放提示音
+        if(isRingingBell){
+            ringingBell(0);
+        }
+    }
     return true;
 }
 
@@ -330,15 +359,59 @@ function descOrTextNotContains(node, str){
     }
 }
 
-//点击控件所在坐标
-function btn_position_click(x) {
-    if (x) {
-        var b = x.bounds();
-        print(b.centerX())
-        print(b.centerY())
-        var c = click(b.centerX(), b.centerY())
 
-        console.log("点击是否成功：" + c);
-    }
+function webHookSend(content){
+    let res = http.postJson(webHookNoticeUrl, {
+        "msg_type": "text",
+        "content": {
+            "text": content
+        }
+    }, {
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        });
+    console.log("webHook通知结果："+res.body.string());
 }
 
+function ringingBell(铃声类型, 是否循环播放, 播放时长) {
+    var 播放时长 = 播放时长 || 10000;
+    var 是否循环播放 = 是否循环播放 || false;
+    if (是否循环播放) {
+        播放时长 = 666 * 1000;
+    }
+    var 铃声选择结果 = android.media.RingtoneManager.TYPE_NOTIFICATION;
+    switch (铃声类型) {
+        case 0:
+            铃声选择结果 = android.media.RingtoneManager.TYPE_RINGTONE;
+            break;
+        case 1:
+            铃声选择结果 = android.media.RingtoneManager.TYPE_ALARM;
+            break;
+        case 2:
+            铃声选择结果 = android.media.RingtoneManager.TYPE_ALL;
+            break;
+        default:
+            break;
+    }
+    var mp = new android.media.MediaPlayer();
+    mp.setDataSource(context, android.media.RingtoneManager.getDefaultUri(铃声选择结果));
+    if (是否循环播放) mp.setLooping(true);
+    mp.prepare();
+    log("播放铃声...")
+    mp.start();
+    threads.start(function () {
+        sleep(播放时长);
+        if (mp.isPlaying()) {
+            mp.stop();
+        }
+    });
+
+    events.on("exit", function () {
+        if (mp.isPlaying()) {
+            mp.stop();
+        }
+    });
+    return mp;
+}

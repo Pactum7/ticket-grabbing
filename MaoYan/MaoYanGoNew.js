@@ -12,74 +12,35 @@ const ConfirmY = 2263;
 //是否在测试调试
 var isDebug = false;
 //调试模式下的模拟票档自动选择的点击坐标
-const debugTicketClickX = 700;
-const debugTicketClickY = 1000;
+const debugTicketClickX = 207;
+const debugTicketClickY = 1170;
 
 main();
-
-//获取输入的抢票时间
-function getSellTime() {
-    var sellTime = rawInput("请输入抢票时间(按照默认格式)", "04-21 16:18");
-    if (sellTime == null || sellTime.trim() == '') {
-        alert("请输入抢票时间!");
-        return getSellTime();
-    }
-    return sellTime;
-}
 
 function main() {
     console.log("开始猫眼抢票!");
     var preBook = text("已 预 约").findOne(2000)
     var preBook2 = className("android.widget.TextView").text("已填写").findOne(2000)
     var isPreBook = preBook2 != null || preBook != null;
-    var playEtc;
-    var ticketPrice;
     console.log("界面是否已预约：" + isPreBook);
     if (!isPreBook && !isDebug) {
         console.log("无预约信息，请提前填写抢票信息!（若已经开票，请到票档界面使用MoYanMonitor.js）");
         return;
     }
 
-    var month;
-    var day;
-    var hour;
-    var minute;
-
-    var inputTime = getSellTime();
-    //在这里使用输入的时间进行后续操作
-    console.log("输入的抢票时间：" + inputTime);
-    var times = inputTime.split(" ");
-    var time1 = times[0]
-    var time2 = times[1]
-    var monthDay = time1.split("-");
-    month = monthDay[0] - 1;
-    day = monthDay[1];
-    var hourMinute = time2.split(":");
-    hour = hourMinute[0];
-    minute = hourMinute[1];
-
-    // 设置开抢时间
-    var year = new Date().getFullYear();
-    var second = 0;
-    var msecond = 0;
-    var startTimestamp = new Date(year, month, day, hour, minute, second, msecond).getTime();
-    // 减去 45ms 的网络延迟
-    startTimestamp = startTimestamp - 45;
-    var damaiTimestamp;
-    var startTime = convertToTime(startTimestamp);
-    console.log("开抢时间：", startTime);
-    console.log("等待开抢...");
-    // 循环等待
-    while (true) {
-        damaiTimestamp = getDamaiTimestamp();
-
-        if (damaiTimestamp >= startTimestamp) {
-            break;
+    //出现刷新按钮时点击刷新
+    threads.start(function () {
+        log('刷新按钮自动点击线程已启动')
+        while(true){
+            textContains("刷新").waitFor()
+            textContains("刷新").findOne().click()
+            log("点击刷新...")
+            //避免点击过快
+            sleep(100)
         }
-    }
+    });
 
-    var realStartTime = getDamaiTimestamp();
-    console.log("冲啊！！！");
+    console.log("等待开抢...");
     while (true) {
         var but1 = classNameStartsWith('android.widget.').text("立即预订").exists();
         var but2 = classNameStartsWith('android.widget.').text("立即购票").exists();
@@ -137,42 +98,6 @@ function main() {
         console.log("调试模式，不点击支付按钮");
     }
 
-    console.log("结束时间：" + convertToTime(getDamaiTimestamp()))
+    console.log("结束")
 
-}
-
-/**
-* 
-* @returns 大麦服务器时间戳
-*/
-function getDamaiTimestamp() {
-    return JSON.parse(http.get("https://mtop.damai.cn/gw/mtop.common.getTimestamp/", {
-        headers: {
-            'Host': 'mtop.damai.cn',
-            'Content-Type': 'application/json;charset=utf-8',
-            'Accept': '*/*',
-            'User-Agent': 'floattime/1.1.1 (iPhone; iOS 15.6; Scale/3.00)',
-            'Accept-Language': 'zh-Hans-CN;q=1, en-CN;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive'
-        }
-    }).body.string()).data.t;
-}
-
-/**
-* 
-* @param {时间戳} timestamp 
-* @returns ISO 8601 格式的北京时间
-*/
-function convertToTime(timestamp) {
-    var date = new Date(Number(timestamp));
-    var year = date.getUTCFullYear();
-    var month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-    var day = date.getUTCDate().toString().padStart(2, "0");
-    var hours = (date.getUTCHours() + 8).toString().padStart(2, "0");
-    var minutes = date.getUTCMinutes().toString().padStart(2, "0");
-    var seconds = date.getUTCSeconds().toString().padStart(2, "0");
-    var milliseconds = date.getUTCMilliseconds().toString().padStart(3, "0");
-    var iso8601 = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
-    return iso8601;
 }
