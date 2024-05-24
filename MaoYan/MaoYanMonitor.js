@@ -104,17 +104,18 @@ function main() {
         }
     });
 
+    sleep(1000);
     while (true) {
-        //每2秒刷新一次票档
-        sleep(monitorIntervalSeconds * 1000);
         //只要当前在场次选择界面，就点击刷新余票信息
         if(className("android.widget.TextView").text("场次").exists() && !textContains("数量").exists()){
             for(let playEtc of playEtcArr){
                 if(isDebug){
-                    log("刷新场次余票信息：")
+                    log("刷新场次余票信息："+playEtc)
                 }
                 //刷新余票信息
                 textContains(playEtc).findOne().click();
+                //点击一个场次，间隔时间后继续点击下一个场次
+                sleep(monitorIntervalSeconds * 1000);
             }
         }
     }
@@ -320,7 +321,7 @@ function get_less_than_tickets(maxTicketPrice) {
         // log(btn.text());
         //适配：某些设备上，缺货提示在文本中；某些设备上，缺货提示在兄弟元素中
         if ((btn.parent().childCount() == 1 && !btn.text().includes("缺货")) 
-            || btn.parent().childCount() >= 1 && descOrTextNotContains(btn.parent(), "缺货")){
+            || (btn.parent().childCount() >= 1 && descOrTextNotContains(btn.parent(), "缺货"))){
             let match = btn.text().match(/\¥(\d+)/);
             let amount;
             if (match && (amount = parseInt(match[1])) < maxTicketPrice) {
