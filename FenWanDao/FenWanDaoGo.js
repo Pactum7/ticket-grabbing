@@ -101,7 +101,7 @@ function main() {
         if(text("确认").exists()){
             text("确认").click();
         }
-        sleep(50);
+        sleep(Math.random()*50+25);
         if (className("android.widget.Button").desc("提交订单").exists()) {
             break;
         }

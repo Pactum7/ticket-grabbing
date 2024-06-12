@@ -146,7 +146,7 @@ function main() {
     //立即支付按钮一直在一直支付
     // while(className("android.widget.Button").exists()){
     //     var c = className("android.widget.Button").findOne().click();
-    //     sleep(100)
+    //     sleep(Math.random()*100+50)
     //     console.log("继续点击立即支付 "+c);  
     // }
     
