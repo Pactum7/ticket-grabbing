@@ -70,7 +70,7 @@ function main() {
     console.log("观演人：" + viewers);
 
     //等待一小会儿，避免上个弹窗还没关闭，无法正确判断票档区布局元素是否存在
-    sleep(50);
+    sleep(Math.random()*50+25);
     if (!textContains("¥").exists()) {
         refresh_ticket_dom();
     }
@@ -87,7 +87,7 @@ function main() {
             textContains("刷新").findOne().click()
             log("点击刷新...")
             //避免点击过快
-            sleep(100)
+            sleep(Math.random()*100+50)
         }
     });
 
@@ -98,7 +98,7 @@ function main() {
             while (textContains("¥").exists()) {
                 cycleMonitor(maxTicketPrice, viewers);
                 //50ms扫描一次
-                sleep(50);
+                sleep(Math.random()*50+25);
             }
             sleep(1000);
         }
@@ -200,7 +200,7 @@ function doSubmit(amount, viewers) {
         for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
             //直接猛点就完事了
             var c = className("android.widget.Button").findOne().click();
-            sleep(50);
+            sleep(Math.random()*50+25);
             if (cnt % 20 == 0) {
                 log("点支付次数:" + cnt + " 可继续等待或返回上一个界面继续刷新其他票档");
             }
@@ -321,7 +321,9 @@ function get_less_than_tickets(maxTicketPrice) {
         // log(btn.text());
         //适配：某些设备上，缺货提示在文本中；某些设备上，缺货提示在兄弟元素中
         if ((btn.parent().childCount() == 1 && !btn.text().includes("缺货")) 
-            || (btn.parent().childCount() >= 1 && descOrTextNotContains(btn.parent(), "缺货"))){
+            || (btn.parent().childCount() >= 1 && descOrTextNotContains(btn.parent(), "缺货"))
+            || (!btn.text().includes("缺货"))
+        ){
             let match = btn.text().match(/\¥(\d+)/);
             let amount;
             if (match && (amount = parseInt(match[1])) < maxTicketPrice) {
