@@ -36,7 +36,7 @@ function main() {
             textContains("刷新").findOne().click()
             log("点击刷新...")
             //避免点击过快
-            sleep(100)
+            sleep(Math.random()*100+50)
         }
     });
 
@@ -74,7 +74,7 @@ function main() {
         if(text("确认").exists()){
             text("确认").click();
         }
-        sleep(50);
+        sleep(Math.random()*50+25);
         if (className("android.widget.Button").exists()) {
             break;
         }
@@ -89,7 +89,7 @@ function main() {
         for (let cnt = 0; className("android.widget.Button").exists(); cnt++) {
             //直接猛点就完事了
             var c = className("android.widget.Button").findOne().click();
-            sleep(50);
+            sleep(Math.random()*50+25);
             if (cnt % 20 == 0) {
                 log("已点击支付次数：" + cnt);
             }
