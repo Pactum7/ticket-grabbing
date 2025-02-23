@@ -41,9 +41,3 @@
 #### 情况二：autoxjs不同品牌系统页面解析结果有细微差异
 分析日志和代码执行流程，根据实际情况微调即可
 
-
-
-## 打赏
-熬夜不易，如果对你有帮助，欢迎打赏，你的认可是更新的动力，感谢！
-
-![image](https://github.com/Pactum7/ticket-grabbing/assets/45119228/ac984eb7-b000-4da3-9ebf-d74891b8aaa5)
