@@ -1,0 +1,42 @@
+{
+	"info": {
+		"_postman_id": "665e273c-f9e4-4a34-8ad5-655bab74cb82",
+		"name": "ticket-notice",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "dev-邮件通知",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authentication",
+						"value": "RVKqlRa2zM6qbL9u"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"addr\":\"878284196@qq.com\", \"title\":\"监控成功通知\", \"content\": \"有票，请立即查看\"}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/notice/email",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"notice",
+						"email"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
