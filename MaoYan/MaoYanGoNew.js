@@ -19,8 +19,8 @@ main();
 
 function main() {
     console.log("开始猫眼抢票!");
-    var preBook = text("已 预 约").findOne(2000)
-    var preBook2 = className("android.widget.TextView").text("已填写").findOne(2000)
+    var preBook = text("已 预 约").findOne(2000);
+    var preBook2 = className("android.widget.TextView").text("已填写").findOne(2000);
     var isPreBook = preBook2 != null || preBook != null;
     console.log("界面是否已预约：" + isPreBook);
     if (!isPreBook && !isDebug) {
@@ -30,13 +30,13 @@ function main() {
 
     //出现刷新按钮时点击刷新
     threads.start(function () {
-        log('刷新按钮自动点击线程已启动')
-        while(true){
-            textContains("刷新").waitFor()
-            textContains("刷新").findOne().click()
-            log("点击刷新...")
+        log('刷新按钮自动点击线程已启动');
+        while (true) {
+            textContains("刷新").waitFor();
+            textContains("刷新").findOne().click();
+            log("点击刷新...");
             //避免点击过快
-            sleep(100)
+            sleep(100);
         }
     });
 
@@ -71,7 +71,7 @@ function main() {
         //绝对坐标点击
         click(ConfirmX, ConfirmY);
         //文字查找按钮点击，避免未正确配置坐标导致的点击失败
-        if(text("确认").exists()){
+        if (text("确认").exists()) {
             text("确认").click();
         }
         sleep(50);
@@ -94,10 +94,10 @@ function main() {
                 log("已点击支付次数：" + cnt);
             }
         }
-    }else{
+    } else {
         console.log("调试模式，不点击支付按钮");
     }
 
-    console.log("结束")
+    console.log("结束");
 
 }
