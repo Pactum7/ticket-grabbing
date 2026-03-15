@@ -6,8 +6,8 @@ openConsole();
 console.setTitle("纷玩岛 go!", "#ff11ee00", 30);
 
 //确认选票坐标，建议配置（不配置时仍会寻找“确认”按钮进行点击，但可能会出现点击失败的情况）
-const ConfirmX = 878;
-const ConfirmY = 2263;
+const ConfirmX = 779;
+const ConfirmY = 1824;
 
 //是否在测试调试
 var isDebug = false;
@@ -67,21 +67,26 @@ function main() {
         }
     }
 
+
+
     console.log("冲啊！！！");
     while (true) {
-        var but1 = classNameStartsWith('android.widget.').desc("立即预订").exists();
-        var but2 = classNameStartsWith('android.widget.').desc("立即购买").exists();
-        var but3 = classNameStartsWith('android.widget.').desc("特惠购票").exists();
-        //var but4= classNameStartsWith('android.widget.').text("缺货登记").exists();
-        var result = but1 || but2 || but3;
+        var but1 = className("android.view.View").desc("立即预订").exists()
+        var but2 = className("android.view.View").desc("立即购买").exists()
+        var but3 = className("android.view.View").desc("特惠购票").exists()
+        var but4 = className("android.view.View").desc("缺票登记").exists()
+
+        var result = but1 || but2 || but3 || but4;
         if (result) {
             var s;
             if (but1) {
-                var s = classNameStartsWith('android.widget.').desc("立即预订").findOne().click();
+                var s = className('android.view.View').desc("立即预订").findOne().click();
             } else if (but2) {
-                var s = classNameStartsWith('android.widget.').desc("立即购买").findOne().click();
+                var s = className('android.view.View').desc("立即购买").findOne().click();
             } else if (but3) {
-                var s = classNameStartsWith('android.widget.').desc("特惠购票").findOne().click();
+                var s = className('android.view.View').desc("特惠购票").findOne().click();
+            } else if (but4) {
+                var s = className('android.view.View').desc("缺票登记").findOne().click();
             }
             break;
         }
