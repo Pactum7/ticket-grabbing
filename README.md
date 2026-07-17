@@ -41,3 +41,7 @@
 #### 情况二：autoxjs不同品牌系统页面解析结果有细微差异
 分析日志和代码执行流程，根据实际情况微调即可
 
+#### 情况三：鸿蒙系统中 `result` 一直是 false，循环跳不出去？
+如果脚本里用了 `classNameStartsWith('android.widget.')` 限制控件类型，在 HarmonyOS NEXT（纯鸿蒙）上容易匹配不到节点，导致一直找不到“立即购买/立即预订/特惠购票”。
+
+建议改为优先使用 `desc()/text()` 直接匹配按钮文案，不依赖 `android.widget.*` 类名前缀。
