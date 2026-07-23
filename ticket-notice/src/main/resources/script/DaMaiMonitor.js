@@ -1,5 +1,5 @@
 //邮件通知，不配置则不发送邮件提醒
-const myEmailAddr = "878284196@qq.com"
+const myEmailAddr = ""
 //是否响铃提醒
 const isRingingBell = true
 //云端邮件通知接口密钥
