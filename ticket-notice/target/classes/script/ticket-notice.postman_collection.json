@@ -16,12 +16,12 @@
 					},
 					{
 						"key": "Authentication",
-						"value": "replace-with-your-authentication-token"
+						"value": "RVKqlRa2zM6qbL9u"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"addr\":\"replace-with-your-email@example.com\", \"title\":\"监控成功通知\", \"content\": \"有票，请立即查看\"}"
+					"raw": "{\"addr\":\"878284196@qq.com\", \"title\":\"监控成功通知\", \"content\": \"有票，请立即查看\"}"
 				},
 				"url": {
 					"raw": "http://localhost:8080/notice/email",

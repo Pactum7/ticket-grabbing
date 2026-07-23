@@ -14,6 +14,7 @@ var isDebug = false;
 //调试模式下的模拟票档自动选择的点击坐标
 const debugTicketClickX = 700;
 const debugTicketClickY = 990;
+const buyButtonTexts = ["立即预订", "立即购买", "特惠购票"];
 
 main();
 
@@ -69,22 +70,12 @@ function main() {
 
     console.log("冲啊！！！");
     while (true) {
-        var but1 = classNameStartsWith('android.widget.').desc("立即预订").exists();
-        var but2 = classNameStartsWith('android.widget.').desc("立即购买").exists();
-        var but3 = classNameStartsWith('android.widget.').desc("特惠购票").exists();
-        //var but4= classNameStartsWith('android.widget.').text("缺货登记").exists();
-        var result = but1 || but2 || but3;
-        if (result) {
-            var s;
-            if (but1) {
-                var s = classNameStartsWith('android.widget.').desc("立即预订").findOne().click();
-            } else if (but2) {
-                var s = classNameStartsWith('android.widget.').desc("立即购买").findOne().click();
-            } else if (but3) {
-                var s = classNameStartsWith('android.widget.').desc("特惠购票").findOne().click();
-            }
+        var buyButton = findBuyButton();
+        if (buyButton) {
+            buyButton.click();
             break;
         }
+        sleep(20);
     }
     console.log("①准备确认购票");
 
@@ -182,4 +173,19 @@ function convertToTime(timestamp) {
     var milliseconds = date.getUTCMilliseconds().toString().padStart(3, "0");
     var iso8601 = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
     return iso8601;
+}
+
+function findBuyButton() {
+    for (let i = 0; i < buyButtonTexts.length; i++) {
+        var txt = buyButtonTexts[i];
+        var byDesc = desc(txt);
+        if (byDesc.exists()) {
+            return byDesc.findOne(20);
+        }
+        var byText = text(txt);
+        if (byText.exists()) {
+            return byText.findOne(20);
+        }
+    }
+    return null;
 }

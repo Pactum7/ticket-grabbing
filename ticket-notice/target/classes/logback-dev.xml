@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 不打印logback本身的装载日志 -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <!--占位符定义：日志格式-->
+    <property name="PATTERN" value="%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} | %-5level | %X{tid:-N/A} | %thread | %logger{40} | %msg%xEx%n" />
+
+    <property name="logDir" value="d://ticket-notice//log" />
+
+    <!-- SizeAndTimeBasedRollingPolicy -->
+    <property name="maxFileSize" value="500MB" />
+    <property name="maxHistory" value="15" />
+    <property name="totalSizeCap" value="50GB" />
+
+    <!--占位符定义：业务日志路径 -->
+    <property name="bizLogDir" value="${dy.app.log.dir}/biz" />
+
+    <!--用来设置上下文名称，用于区分不同应用程序的记录-->
+    <contextName>ticket-notice</contextName>
+
+    <!-- ########## 业务日志 ########## -->
+
+    <appender name="bizLogAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${bizLogDir}/${dy.app.name}.biz.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${bizLogDir}/${dy.app.name}.%d{yyyy-MM-dd}.%i.biz.log</fileNamePattern>
+            <maxFileSize>${maxFileSize}</maxFileSize>
+            <maxHistory>${maxHistory}</maxHistory>
+            <totalSizeCap>${totalSizeCap}</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name ="asyncBizLogAppender" class= "ch.qos.logback.classic.AsyncAppender">
+        <!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
+        <discardingThreshold >0</discardingThreshold>
+        <!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
+        <queueSize>20480</queueSize>
+        <!-- 队列满时直接丢弃，避免阻塞线程 -->
+        <neverBlock>true</neverBlock>
+        <!-- 添加附加的appender,最多只能添加一个 -->
+        <appender-ref ref ="bizLogAppender"/>
+    </appender>
+
+    <!-- 定义控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 定义日志输出格式 -->
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <include optional="true" file="${dy.app.home}/conf/logback.snippet.spam-themis-check.xml"/>
+    
+
+    <!-- ########## loggers ########## -->
+
+    <logger name="org.apache.dubbo.monitor.dubbo.DubboMonitor" level="WARN" additivity="false">
+        <appender-ref ref="asyncBizLogAppender" />
+    </logger>
+
+    <logger name="com.xxl.job.core.thread" level="WARN" additivity="false">
+        <appender-ref ref="asyncBizLogAppender" />
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="asyncBizLogAppender" />
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
